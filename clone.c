@@ -39,7 +39,7 @@ int clone_thread(u64 clone_flags, u64 func, u64 args, u64 stack)
         p->stack = stack;
     }
     p->flags = clone_flags;
-    p->counter = p->priority = current->priority;
+    p->left_ticks = p->priority = current->priority;
     p->state = TASK_RUNNING;
     p->preempt_count = 1; // disable preemtion until schedule_tail
 

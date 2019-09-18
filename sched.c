@@ -16,46 +16,45 @@ void enable_preempt(void)
     current->preempt_count --;
 }
 
-
-void _schedule(void)
+void _sched()
 {
-	disable_preempt();
-	int next,c;
-	struct task_struct * p;
-	while (1) {
-		c = -1;
-		next = 0;
-		for (int i = 0; i < NR_TASKS; i++){
-			p = tasks[i];
-			if (p && p->state == TASK_RUNNING && p->counter > c) {
-				c = p->counter;
-				next = i;
-			}
-		}
-		if (c) {
-			break;
-		}
-		for (int i = 0; i < NR_TASKS; i++) {
-			p = tasks[i];
-			if (p) {
-				p->counter = (p->counter >> 1) + p->priority;
-			}
-		}
-	}
-	switch_to(tasks[next], next);
+    disable_preempt();
 
+    struct task_struct *p;
+    int next, ticks;
+    for (;;) {
+        ticks = -1; next = 0;
+
+        // seek the task owner of the longest remaining ticks
+        for (int i = 0; i < NR_TASKS; ++i) {
+            p = tasks[i];
+            if (p && TASK_RUNNING == p->state && p->left_ticks > ticks) {
+                ticks = p->left_ticks;
+                next = i;
+            }
+        }
+
+        if (ticks)
+            break;
+
+        for (int i = 0; i < NR_TASKS; ++i) {
+            p = tasks[i];
+            if (p)
+                p->left_ticks = (p->left_ticks >> 1) + p->priority;
+        }
+    }
+
+    switch_to(tasks[next], next);
 /*
-    uart_puts("\n_schedule : ");
-    uart_puthex(task[next]);
+    printf("_sched : 0x%x\n", tasks[next]);
 */
-
-	enable_preempt();
+    enable_preempt();
 }
 
 void schedule(void)
 {
-	current->counter = 0;
-	_schedule();
+	current->left_ticks = 0;
+	_sched();
 }
 
 
@@ -94,14 +93,14 @@ void exit_process()
 
 void timer_tick()
 {
-    current->counter--;
-    if (current->counter > 0 || current->preempt_count > 0)
+    -- current->left_ticks;
+    if (current->left_ticks > 0 || current->preempt_count > 0)
         return;
         
-    current->counter = 0;
+    current->left_ticks = 0;
     
     enable_irq();
-    _schedule();
+    _sched();
     disable_irq();
 }
 

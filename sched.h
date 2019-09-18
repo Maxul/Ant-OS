@@ -20,7 +20,8 @@ struct cpu_context {
 struct task_struct {
     struct cpu_context cpu_context;
     long state;
-    long counter, priority;
+    long left_ticks;
+    long priority;
     long preempt_count;
     u64 stack;
     u64 flags;

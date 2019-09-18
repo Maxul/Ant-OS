@@ -13,7 +13,7 @@ void kernel_thread_A(void)
     uint64_t a = 0;
     for (;;) {
         printf("Kernel Task A: Hello, world: %lu\n", a++);
-        delay(1000000);
+        delay(10000000);
     }
 }
 
@@ -22,7 +22,7 @@ void kernel_thread_B(void)
     uint64_t b = 0;
     for (;;) {
         printf("Kernel Task B: Hello, world: %lu\n", b++);
-        delay(1000000);
+        delay(10000000);
     }
 }
 
@@ -31,7 +31,7 @@ void user_thread_A(void)
     uint64_t a = 0;
     for (;;) {
         printf("User Task A: Hello, world: %lu\n", a++);
-        delay(1000000);
+        delay(10000000);
     }
 }
 
@@ -40,7 +40,7 @@ void user_thread_B(void)
     uint64_t b = 0;
     for (;;) {
         printf("User Task B: Hello, world: %lu\n", b++);
-        delay(1000000);
+        delay(10000000);
     }
 }
 
