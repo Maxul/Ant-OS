@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define TICKS_PER_SECOND (8)
+#define TICKS_PER_SECOND (25)
 
 extern void enable_irq(void);
 extern void disable_irq(void);

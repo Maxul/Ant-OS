@@ -6,20 +6,8 @@ static struct task_struct init_task = INIT_TASK;
 struct task_struct * current = &init_task;
 struct task_struct * tasks[NR_TASKS] = {&init_task, };
 
-void disable_preempt(void)
-{
-    current->preempt_count ++;
-}
-
-void enable_preempt(void)
-{
-    current->preempt_count --;
-}
-
 void _sched()
 {
-    disable_preempt();
-
     struct task_struct *p;
     int next, ticks;
     for (;;) {
@@ -48,7 +36,6 @@ void _sched()
 /*
     printf("_sched : 0x%x\n", tasks[next]);
 */
-    enable_preempt();
 }
 
 void schedule(void)
@@ -70,13 +57,10 @@ void switch_to(struct task_struct * next, int index)
 
 void schedule_tail()
 {
-    enable_preempt();
 }
 
 void exit_process()
 {
-    disable_preempt();
-    
     for (int i = 0; i < NR_TASKS; ++i) {
         if (current == tasks[i])
             tasks[i]->state = TASK_ZOMBIE;
@@ -86,15 +70,13 @@ void exit_process()
         free_page(current->stack);
     }
     
-    enable_preempt();
-    
     schedule();
 }
 
 void timer_tick()
 {
-    -- current->left_ticks;
-    if (current->left_ticks > 0 || current->preempt_count > 0)
+    current->left_ticks -= 1;
+    if (current->left_ticks > 0)
         return;
         
     current->left_ticks = 0;

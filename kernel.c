@@ -8,12 +8,12 @@ static inline void io_halt(void)
     asm volatile("wfi");
 }
 
-void kernel_thread_A(void)
+void kernel_thread_A(int args)
 {
-    uint64_t a = 0;
+    uint64_t a = args;
     for (;;) {
         printf("Kernel Task A: Hello, world: %lu\n", a++);
-        delay(10000000);
+        delay(1000000);
     }
 }
 
@@ -22,7 +22,7 @@ void kernel_thread_B(void)
     uint64_t b = 0;
     for (;;) {
         printf("Kernel Task B: Hello, world: %lu\n", b++);
-        delay(10000000);
+        delay(1000000);
     }
 }
 
@@ -31,7 +31,7 @@ void user_thread_A(void)
     uint64_t a = 0;
     for (;;) {
         printf("User Task A: Hello, world: %lu\n", a++);
-        delay(10000000);
+        delay(1000000);
     }
 }
 
@@ -40,7 +40,7 @@ void user_thread_B(void)
     uint64_t b = 0;
     for (;;) {
         printf("User Task B: Hello, world: %lu\n", b++);
-        delay(10000000);
+        delay(1000000);
     }
 }
 
@@ -98,17 +98,21 @@ void kernel_main(void)
 
     int res;
 
+
     res = clone_thread(PF_KTHREAD, (unsigned long)&kernel_thread, 0, 0);
 	if (res < 0) {
 		printf("error while starting kernel thread");
 		return;
 	}
 
-    res = clone_thread(PF_KTHREAD, (unsigned long)&kernel_thread_A, 0, 0);
+int xxx = 20;
+while (xxx--) {
+    res = clone_thread(PF_KTHREAD, (unsigned long)&kernel_thread_A, xxx, 0);
     if (res < 0) {
         printf("error while starting thread 1");
         return;
     }
+}
     res = clone_thread(PF_KTHREAD, (unsigned long)&kernel_thread_B, 0, 0);
     if (res < 0) {
         printf("error while starting thread 2");

@@ -5,7 +5,7 @@
 #define PF_KTHREAD		0x00200000	/* I am a kernel thread */
 
 #define TLS_SIZE (4096)
-#define NR_TASKS (16)
+#define NR_TASKS (1<<10)
 
 enum {
     TASK_RUNNING,
@@ -22,7 +22,6 @@ struct task_struct {
     long state;
     long left_ticks;
     long priority;
-    long preempt_count;
     u64 stack;
     u64 flags;
 };

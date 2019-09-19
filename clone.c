@@ -18,8 +18,6 @@ struct pt_regs *task_pt_regs(struct task_struct *task)
 
 int clone_thread(u64 clone_flags, u64 func, u64 args, u64 stack)
 {
-    disable_preempt();
-    
     struct task_struct *p = (struct task_struct *) get_free_page();
     if (!p)
         return -1;
@@ -41,7 +39,6 @@ int clone_thread(u64 clone_flags, u64 func, u64 args, u64 stack)
     p->flags = clone_flags;
     p->left_ticks = p->priority = current->priority;
     p->state = TASK_RUNNING;
-    p->preempt_count = 1; // disable preemtion until schedule_tail
 
     p->cpu_context.sp = child_regs;
     p->cpu_context.pc = ret_from_fork;
@@ -49,7 +46,6 @@ int clone_thread(u64 clone_flags, u64 func, u64 args, u64 stack)
     int pid = nr_tasks++;
     tasks[pid] = p;
 
-    enable_preempt();
     return pid;
 }
 

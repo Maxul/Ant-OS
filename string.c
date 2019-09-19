@@ -1,9 +1,9 @@
-#include <stddef.h> /* size_t */
+#include "ok.h"
 
-void *memset(void *s, int c, size_t n)
+void *memset(void *s, u16 c, i64 n)
 {
-    unsigned char* p=s;
-    while(n--)
-        *p++ = (unsigned char)c;
+    u16 *p = s;
+    while (n--)
+        *p++ = c;
     return s;
 }
