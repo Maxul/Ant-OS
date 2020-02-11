@@ -2,84 +2,40 @@
 #include <stdint.h>
 
 #include "uart.h"
-#if 0
+
 void uart_init(void)
 {
-	unsigned int ra;
+	unsigned long base = PL011_UART6_BASE;
 
-	put32(AUX_ENABLES, 1);
-	put32(AUX_MU_IER_REG, 0);
-	put32(AUX_MU_CNTL_REG, 0);
-	put32(AUX_MU_LCR_REG, 3);
-	put32(AUX_MU_MCR_REG, 0);
-	put32(AUX_MU_IER_REG, 0);
-	put32(AUX_MU_IIR_REG, 0xC6);
-	put32(AUX_MU_BAUD_REG, 270);
-	ra = get32(GPFSEL1);
-	ra &= ~(7 << 12);	//gpio14
-	ra |= 2 << 12;		//alt5
-	ra &= ~(7 << 15);	//gpio15
-	ra |= 2 << 15;		//alt5
-	put32(GPFSEL1, ra);
-	put32(GPPUD, 0);
-	delay(150);
-	put32(GPPUDCLK0, (1 << 14) | (1 << 15));
-	delay(150);
-	put32(GPPUDCLK0, 0);
-	put32(AUX_MU_CNTL_REG, 3);
-}
-
-unsigned int uart_lsr(void)
-{
-	return get32(AUX_MU_LSR_REG);
-}
-
-unsigned int uart_recv(void)
-{
-	while (1) {
-		if (uart_lsr() & 0x01) {
-			break;
-		}
+	/* Clear all errors */
+	put32(base + UART_RSR_ECR, 0);
+	/* Disable everything */
+	put32(base + UART_CR, 0);
+	if (CONSOLE_BAUDRATE) {
+		unsigned int divisor =
+		    (CONSOLE_UART_CLK_IN_HZ * 4) / CONSOLE_BAUDRATE;
+		put32(base + UART_IBRD, divisor >> 6);
+		put32(base + UART_FBRD, divisor & 0x3f);
 	}
-	return get32(AUX_MU_IO_REG) & 0xFF;
+	/* Configure TX to 8 bits, 1 stop bit, no parity, fifo disabled. */
+	put32(base + UART_LCR_H, UART_LCRH_WLEN_8);
+
+	/* Enable interrupts for receive and receive timeout */
+	put32(base + UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+
+	/* Enable UART and RX/TX */
+	put32(base + UART_CR, UART_CR_UARTEN | UART_CR_TXE | UART_CR_RXE);
 }
 
-void uart_send(unsigned int c)
+void uart_putc(char ch)
 {
-	while (1) {
-		if (uart_lsr() & 0x20) {
-			break;
-		}
+	/* Wait until there is space in the FIFO or device is disabled */
+	while (get32((unsigned long)PL011_UART6_BASE + UART_FR)
+	       & UART_FR_TXFF) {
 	}
-	put32(AUX_MU_IO_REG, c);
+	/* Send the character */
+	put32((unsigned long)PL011_UART6_BASE + UART_DR, (unsigned int)ch);
 }
-
-void uart_send_string(char *str)
-{
-	for (int i = 0; str[i] != '\0'; i++) {
-		uart_send((char)str[i]);
-	}
-}
-
-void uart_putc(char c)
-{
-	uart_send(c);
-}
-#endif
-
-#define UART0_DR   ((volatile uint32_t *)(0x3F201000))
-#define UART0_FR   ((volatile uint32_t *)(0x3F201018))
-#define UART0_IMSC ((volatile uint32_t *)(0x3F201038))
-#define UART0_MIS  ((volatile uint32_t *)(0x3F201040))
-
-void uart_putc(char c)
-{
-    // Wait for UART to become ready to transmit.
-    while (*UART0_FR & (1 << 5)) { }
-    *UART0_DR = c;
-}
-
-
 
 void uart_puts(const char* str)
 {
